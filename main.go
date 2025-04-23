@@ -7,63 +7,60 @@ import (
 func main() {
 	// variables
 
-	var name string = "Cyrus"
-	fmt.Printf("This is my name %s\n", name)
+	age := 30
 
-	age := 43
-	fmt.Printf("this is my age %d\n", age)
+	if age >= 18 {
+		fmt.Println("You are a adult")
+	} else if age >= 13 {
+		fmt.Println("You are a teenager")
+	} else {
+		fmt.Println("You are a child")
+	}
 
-	var city string = "Holmdel"
-	fmt.Printf("this is my city %s\n", city)
+	day := "Tuesday"
 
-	var country, continent string = "USA", "North America"
-	fmt.Printf("this is my country %s and this is my continent %s\n", country, continent)
+	switch day {
+	case "Monday":
+		fmt.Println("start of the week")
+	case "Tuesday", "Wednesday", "Thursday":
+		fmt.Println("Midweek")
+	case "Friday":
+		fmt.Println("TGIF")
+	default:
+		fmt.Println("it's the weekend")
+	}
 
-	var (
-		isEmployed bool   = true
-		salary     int    = 50000
-		position   string = "Software Engineer"
-	)
+	for i := 0; i < 5; i++ {
+		fmt.Println("this is i", i)
+	}
 
-	fmt.Printf("isEmployed: %t this is my salary %d this is my position: %s", isEmployed, salary, position)
+	counter := 0
+	for counter < 3 {
+		fmt.Println("counter is", counter)
+		counter++
+	}
 
-	// zero values
+	iterations := 0
+	for {
+		if iterations > 3 {
+			break
+		}
+		fmt.Println("iterations is", iterations)
+		iterations++
+	}
 
-	var defaultInt int
-	var defaultFloat float64
-	var defaultString string
-	var defaultBool bool
+	matrix := [2][3]int{
+		{1, 2, 3},
+		{4, 5, 6},
+	}
 
-	fmt.Printf("int: %d float: %f string: %s bool: %t\n", defaultInt, defaultFloat, defaultString, defaultBool)
+	fmt.Printf("this is our matrix %v\n", matrix)
 
-	// constants
-	const pi = 3.14
-	const (
-		Monday    = 1
-		Tuesday   = 2
-		Wednesday = 3
-	)
-	fmt.Printf("Monday %d - Tuesday %d Wednesday %d\n", Monday, Tuesday, Wednesday)
-
-	const typedAge int = 44
-	const untypedAge = 44
-
-	fmt.Printf("typedAge: %d untypedAge: %d\n", typedAge, untypedAge)
-
-	const (
-		Jan int = iota + 1
-		Feb
-		Mar
-		Apr
-	)
-
-	fmt.Printf("jan - %d feb - %d mar - %d apr - %d\n", Jan, Feb, Mar, Apr)
-
-	result := add(3, 4)
-	fmt.Println("this is the result", result)
-
-	sum, product := calculateSumAndProduct(3, 4)
-	fmt.Printf("this is sum: %d and this is product: %d\n", sum, product)
+	for i := 0; i < len(matrix); i++ {
+		for j := 0; j < len(matrix[i]); j++ {
+			fmt.Println("matrix[", i, "][", j, "] =", matrix[i][j])
+		}
+	}
 
 }
 
