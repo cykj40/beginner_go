@@ -1,0 +1,20 @@
+{
+  "title": "Morning Strength Training",
+  "description": "Full body strength training session",
+  "duration_minutes": 60,
+  "calories_burned": 500,
+  "entries": [
+    {
+      "exercise_name": "Squats",
+      "sets": 3,
+      "reps": 12,
+      "order_index": 1
+    },
+    {
+      "exercise_name": "Bench Press",
+      "sets": 3,
+      "reps": 10,
+      "order_index": 2
+    }
+  ]
+} 
