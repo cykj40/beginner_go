@@ -2,23 +2,50 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"time"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
-type password struct {
-	plainText *string
-	hash []byte
+type User struct {
+	ID           int64
+	Username     string
+	Email        string
+	Password     Password
+	PasswordHash []byte
+	Bio          string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
-type User struct {
-	ID           int       `json:"id"`
-	Username     string    `json:"username"`
-	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"`
-	Bio          string    `json:"bio"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+type Password struct {
+	plainText *string
+	Hash      []byte
+}
+
+func (p *Password) Set(plaintextPassword string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(plaintextPassword), 12)
+	if err != nil {
+		return err
+	}
+
+	p.plainText = &plaintextPassword
+	p.Hash = hash
+	return nil
+}
+
+func (p *Password) Matches(plaintextPassword string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword(p.Hash, []byte(plaintextPassword))
+	if err != nil {
+		switch {
+		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):
+			return false, nil
+		default:
+			return false, err
+		}
+	}
+	return true, nil
 }
 
 type PostgresUserStore struct {
@@ -30,8 +57,9 @@ func NewPostgresUserStore(db *sql.DB) *PostgresUserStore {
 }
 
 type UserStore interface {
-	CraeteUser(*User) error
+	CreateUser(*User) error
 	GetUserByUsername(username string) (*User, error)
+	GetUserByEmail(email string) (*User, error)
 	UpdateUser(*User) error
 }
 
@@ -43,13 +71,12 @@ func (s *PostgresUserStore) CreateUser(user *User) error {
 	`
 
 	err := s.db.QueryRow(query, user.Username, user.Email, user.PasswordHash, user.Bio).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
-    if err != nil {
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
-
 
 func (s *PostgresUserStore) GetUserByUsername(username string) (*User, error) {
 	query := `
@@ -58,20 +85,47 @@ func (s *PostgresUserStore) GetUserByUsername(username string) (*User, error) {
 	WHERE username = $1
 	`
 
+	user := &User{}
 	err := s.db.QueryRow(query, username).Scan(
-		&user.ID, 
-		&user.Username, 
-		&user.Email, 
-		&user.PasswordHash, 
-		&user.Bio, 
-		&user.CreatedAt, 
-		&user.UpdatedAt
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Bio,
+		&user.CreatedAt,
+		&user.UpdatedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, err 
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *PostgresUserStore) GetUserByEmail(email string) (*User, error) {
+	query := `
+	SELECT id, username, email, password_hash, bio, created_at, updated_at
+	FROM users
+	WHERE email = $1
+	`
+
+	user := &User{}
+	err := s.db.QueryRow(query, email).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Bio,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
 	}
 	return user, nil
 }
@@ -80,7 +134,7 @@ func (s *PostgresUserStore) UpdateUser(user *User) error {
 	query := `
 	UPDATE users
 	SET username = $1, email = $2, bio = $3, updated_at = CURRENT_TIMESTAMP
-	WHERE  id = $4 
+	WHERE id = $4 
 	RETURNING updated_at
 	`
 
@@ -91,12 +145,10 @@ func (s *PostgresUserStore) UpdateUser(user *User) error {
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return err 
+		return err
 	}
 	if rowsAffected == 0 {
-		return sql.ErrNorows
+		return sql.ErrNoRows
 	}
+	return nil
 }
-
-
-

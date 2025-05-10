@@ -1,16 +1,21 @@
 package api
 
 import (
+	"encoding/json"
+	"errors"
 	"log"
-	"github.com/melkeydev/femProject/internal/store"
+	"net/http"
+	"regexp"
 
+	"github.com/cykj40/beginner_go/internal/store"
+	"github.com/cykj40/beginner_go/internal/utils"
 )
 
 type registerUserRequest struct {
 	Username string `json:"username"`
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
-	Bio string `json:"bio"`
+	Bio      string `json:"bio"`
 }
 
 type UserHandler struct {
@@ -18,36 +23,76 @@ type UserHandler struct {
 	logger    *log.Logger
 }
 
-func NewUserHandler(userStore store.UserStore, logger *logger.Logger) *UserHandler {
-	return &UserHandler {
+func NewUserHandler(userStore store.UserStore, logger *log.Logger) *UserHandler {
+	return &UserHandler{
 		userStore: userStore,
-		logger: logger,
+		logger:    logger,
 	}
 }
 
 func (h *UserHandler) validateRegisterRequest(reg *registerUserRequest) error {
-	if req.Username == "" {
+	if reg.Username == "" {
 		return errors.New("username is required")
 	}
 
-	if len(req.Username) > 50 {
+	if len(reg.Username) > 50 {
 		return errors.New("username cannot be greater than 50 characters")
 	}
 
-	if req.Email == "" {
+	if reg.Email == "" {
 		return errors.New("email is required")
-   }
-   emailRegex := regexp.MustCompiled(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-   if !emailRegex.MatchString(req.Email) {
-	return errors.New("invalid email format")
-   }
+	}
+	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	if !emailRegex.MatchString(reg.Email) {
+		return errors.New("invalid email format")
+	}
 
-   if req.Password == "" {
-	return errors.New("password is required")
-   }
+	if reg.Password == "" {
+		return errors.New("password is required")
+	}
 
-   return nil
+	return nil
 }
 
-func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
-	
+func (h *UserHandler) HandleRegisterUser(w http.ResponseWriter, r *http.Request) {
+	var req registerUserRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		h.logger.Printf("ERROR: decoding register request: %v", err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "invalid request payload"})
+		return
+	}
+
+	err = h.validateRegisterRequest(&req)
+	if err != nil {
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": err.Error()})
+		return
+	}
+
+	user := &store.User{
+		Username: req.Username,
+		Email:    req.Email,
+	}
+
+	if req.Bio != "" {
+		user.Bio = req.Bio
+	}
+
+	err = user.Password.Set(req.Password)
+	if err != nil {
+		h.logger.Printf("ERROR: hashing password %v", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "failed to hash password"})
+		return
+	}
+
+	user.PasswordHash = user.Password.Hash
+
+	err = h.userStore.CreateUser(user)
+	if err != nil {
+		h.logger.Printf("ERROR: creating user %v", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "failed to create user"})
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, utils.Envelope{"user": user})
+}

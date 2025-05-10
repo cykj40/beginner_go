@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -15,11 +16,13 @@ func main() {
 	flag.IntVar(&port, "port", 8080, "port to start the server on")
 	flag.Parse()
 
+	log.Println("Starting application...")
 	app, err := app.NewApplication()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to create application: %v", err)
 	}
 
+	log.Println("Setting up routes...")
 	r := routes.SetupRoutes(app)
 
 	server := &http.Server{
@@ -30,9 +33,18 @@ func main() {
 		WriteTimeout: 30 * time.Second,
 	}
 
-	app.Logger.Printf("Server starting on port %d", port)
+	log.Printf("Server starting on port %d", port)
+	log.Printf("Available endpoints:")
+	log.Printf("  POST /users/register")
+	log.Printf("  POST /users/login")
+	log.Printf("  GET  /health")
+	log.Printf("  GET  /workouts/{id}")
+	log.Printf("  POST /workouts")
+	log.Printf("  PUT  /workouts/{id}")
+	log.Printf("  DELETE /workouts/{id}")
+
 	err = server.ListenAndServe()
 	if err != nil {
-		app.Logger.Fatal(err)
+		log.Fatalf("Server failed to start: %v", err)
 	}
 }
