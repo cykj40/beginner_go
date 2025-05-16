@@ -1,20 +1,14 @@
 {
-  "title": "Morning Strength Training",
-  "description": "Full body strength training session",
-  "duration_minutes": 60,
-  "calories_burned": 500,
+  "title": "Simple Swim",
+  "description": "Basic swim workout",
+  "duration_minutes": 30,
+  "calories_burned": 200,
   "entries": [
     {
-      "exercise_name": "Squats",
-      "sets": 3,
-      "reps": 12,
-      "order_index": 1
-    },
-    {
-      "exercise_name": "Bench Press",
-      "sets": 3,
+      "exercise_name": "Crab Walk",
+      "sets": 1,
       "reps": 10,
-      "order_index": 2
+      "order_index": 1
     }
   ]
 } 

@@ -109,6 +109,10 @@ func (s *PostgresUserStore) GetUserByUsername(username string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Set up the Password field with the hash from the database
+	user.Password.Hash = user.PasswordHash
+
 	return user, nil
 }
 
@@ -135,6 +139,10 @@ func (s *PostgresUserStore) GetUserByEmail(email string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Set up the Password field with the hash from the database
+	user.Password.Hash = user.PasswordHash
+
 	return user, nil
 }
 
@@ -190,6 +198,9 @@ func (s *PostgresUserStore) GetUserToken(scope, plaintextPassword string) (*User
 	if err != nil {
 		return nil, err
 	}
+
+	// Set up the Password field with the hash from the database
+	user.Password.Hash = user.PasswordHash
 
 	return user, nil
 }
